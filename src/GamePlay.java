@@ -6,11 +6,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.Random;
 
 import javax.swing.ImageIcon;
@@ -23,10 +23,10 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private int[] xpoint = {25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,
-			525,550,575,600,625,650,675,700,725,750,775,800,825,850};
-	private int[] ypoint = {75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,
-			525,550,575,600,625};
+	private int[] xpoint = {50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,
+			525,550,575,600,625,650,675,700,725,750,775,800,825};
+	private int[] ypoint = {100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,
+			525,550,575,600};
 	
 	private int[] snakexlength = new int[750];
 	private int[] snakeylength = new int[750];
@@ -45,17 +45,17 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 	private ImageIcon end;
 	
 	private Random random = new Random();
-	private int randxpoint = random.nextInt(34);
-	private int randypoint = random.nextInt(23);
+	private int randxpoint = random.nextInt(32);
+	private int randypoint = random.nextInt(21);
 	private int lengthofsnake = 3;
 	private int move =0;
-	private int score =0;
+	private int score =1;
 	private int score2 =0;
 	
 	private Timer timer;
-	private int delay =100;
+	private int delay=100;
 	
-	private String filename = "highestscore";
+	private String filename = "/highestscore";
 	private String line;
 	
 	
@@ -64,7 +64,7 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 		setFocusable(true);
 		setFocusTraversalKeysEnabled(false);
 		try {
-			FileReader fileReader = new FileReader(filename);
+			InputStreamReader fileReader = new InputStreamReader(getClass().getResourceAsStream(filename));
 			BufferedReader bufferedreader = new BufferedReader(fileReader);
 			while((line = bufferedreader.readLine())!= null) {score2= Integer.parseInt(line);}
 			bufferedreader.close();
@@ -72,11 +72,21 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		timer = new Timer(delay, this);
 		timer.start();
 		
 	}
+	
+	protected  ImageIcon createImageIcon(String path) {
+		java.net.URL imgURL = getClass().getResource(path);
+		if (imgURL != null) {
+				return new ImageIcon(imgURL);
+				} else {
+					System.err.println("Couldn't find file: " + path);
+					return null;
+				}
+}
 	
 	public void paint(Graphics g) {
 		if(move==0) {
@@ -88,15 +98,15 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 			snakeylength[1]=100;
 			snakeylength[0]=100;
 		}
-		
+		setBackground(Color.DARK_GRAY);
 		//draw title image boarder
 		g.setColor(Color.white);
 		g.drawRect(24, 10, 851, 55);
 		//draw title image
-		titleImage = new ImageIcon("SankeTitle.png");
+		titleImage = createImageIcon("/SankeTitle.png");
 		titleImage.paintIcon(this, g, 25, 11);
 		//draw border for game
-		g.setColor(Color.WHITE);
+		g.setColor(Color.white);
 		g.drawRect(24, 74, 851, 577);
 		//draw background
 		g.setColor(Color.black);
@@ -104,39 +114,33 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 		//draw score
 		g.setColor(Color.white);
 		g.setFont(new Font("arial",Font.PLAIN,14));
-		g.drawString("Scores: "+score, 780, 30);
+		g.drawString("Scores: "+ (score-1), 780, 30);
 		//draw highest score
 		g.setColor(Color.white);
 		g.setFont(new Font("arial",Font.PLAIN,14));
 		g.drawString("Highest Score: "+score2, 760, 50);
 		//draw snake head
-		head = new ImageIcon("SnakeHead.png");
+		head = createImageIcon("/SnakeHead.png");
 		head.paintIcon(this, g, snakexlength[0], snakeylength[0]);
 		//draw body
 		for(int i=0; i<lengthofsnake;i++ ) {
-			body = new ImageIcon("SnakeHead.png");
+			body = createImageIcon("/SnakeHead.png");
 			body.paintIcon(this, g, snakexlength[i], snakeylength[i]);
 		}
 		//draw points
-		point = new ImageIcon("point.png");
+		point = createImageIcon("/point.png");
 		point.paintIcon(this, g, xpoint[randxpoint],ypoint[randypoint]);
 		//draw end of the game
-		end = new ImageIcon("GameEnd.png");
+		end = createImageIcon("/GameEnd.png");
 		if(collide(snakexlength,snakeylength,lengthofsnake)) {
-			death = true;
-			left = false;
-			right = false;
-			up = false;
-			down =false;
-			moveable = false;
+			die();
 		}
 		if(death) {
 			end.paintIcon(this, g, 200, 250);
 			try {
 				if(score>score2) {
-				BufferedWriter writer = new BufferedWriter(new FileWriter("highestscore"));
-				
-					writer.write(String.valueOf(score));
+				PrintWriter writer = new PrintWriter(new File(this.getClass().getResource(filename).getPath()));
+				writer.write(String.valueOf(score));
 				writer.close();
 				}
 			} catch (IOException e) {
@@ -144,7 +148,7 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 				e.printStackTrace();
 			}
 			try {
-				FileReader fileReader = new FileReader(filename);
+				InputStreamReader fileReader = new InputStreamReader(getClass().getResourceAsStream(filename));
 				BufferedReader bufferedreader = new BufferedReader(fileReader);
 				while((line = bufferedreader.readLine())!= null) {score2= Integer.parseInt(line);}
 				bufferedreader.close();
@@ -176,14 +180,22 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 		}
 		return false;
 	}
+	public void die() {
+		death = true;
+		left = false;
+		right = false;
+		up = false;
+		down =false;
+		moveable = false;
+	}
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		timer.start();
 		if (xpoint[randxpoint] == snakexlength[0] && ypoint[randypoint] == snakeylength[0]) {
 			lengthofsnake+=1;
 			score+=1;
-			randxpoint = random.nextInt(34);
-			randypoint = random.nextInt(23);
+			randxpoint = random.nextInt(32);
+			randypoint = random.nextInt(21);
 			repaint();
 		}
 		if(moveable) {
@@ -198,8 +210,9 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 				}else {
 					snakexlength[r] = snakexlength[r-1];
 					
-				}if(snakexlength[r]>850){
-					snakexlength[r]=25;
+				}if(snakexlength[r]>=850){
+					//snakexlength[r]=25;
+					die();
 					
 				}
 			}
@@ -217,8 +230,9 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 				}else {
 					snakexlength[r] = snakexlength[r-1];
 					
-				}if(snakexlength[r]<25){
-					snakexlength[r]=850;
+				}if(snakexlength[r]<=25){
+					//snakexlength[r]=850;
+					die();
 					
 				}
 			}
@@ -236,8 +250,9 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 				}else {
 					snakeylength[r] = snakeylength[r-1];
 					
-				}if(snakeylength[r]<75){
-					snakeylength[r]=625;
+				}if(snakeylength[r]<=75){
+					//snakeylength[r]=625;
+					die();
 					
 				}
 			}
@@ -255,8 +270,9 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 				}else {
 					snakeylength[r] = snakeylength[r-1];
 					
-				}if(snakeylength[r]>625){
-					snakeylength[r]=75;
+				}if(snakeylength[r]>=625){
+					//snakeylength[r]=75;
+					die();
 					
 				}
 			}
@@ -287,8 +303,8 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 			down = false;
 		}
 		if(e.getKeyCode()== KeyEvent.VK_LEFT) {
-			move++;
 			left = true;
+			move++;
 			if(!right) {
 				left=true;
 			}else {
@@ -326,7 +342,7 @@ public class GamePlay extends JPanel implements KeyListener, ActionListener{
 			move=0;
 			death = false;
 			lengthofsnake=3;
-			score=0;
+			score=1;
 			moveable = true;
 			repaint();
 		}
